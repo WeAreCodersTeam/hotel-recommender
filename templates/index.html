@@ -1,0 +1,171 @@
+<!-- templates/index.html -->
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <title>Друзья рекомендуют — демо поиска</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="/static/style.css" rel="stylesheet" />
+</head>
+<body>
+  <header class="container">
+    <h1>Друзья рекомендуют — прототип</h1>
+    <p class="muted">
+      Прототип фронта для <code>/api/search</code> и <code>/api/model_info</code>.
+      Провайдер Embeddings можно переопределить заголовками <code>X-Embeddings-*</code>.
+    </p>
+  </header>
+
+  <main class="container grid">
+    <section class="card">
+      <h2>Поиск отелей</h2>
+      <form id="search-form">
+        <label>Запрос
+          <input type="text" name="q" placeholder="например: уютный отель в центре" required />
+        </label>
+
+        <div class="row">
+          <label>Город (опц.)
+            <input type="text" name="city" placeholder="Saint Petersburg" />
+          </label>
+          <label>top_k
+            <input type="number" name="top_k" min="1" max="50" value="10" />
+          </label>
+        </div>
+
+        <div class="row">
+          <label>friends_only
+            <select name="friends_only">
+              <option value="true" selected>True</option>
+              <option value="false">False</option>
+            </select>
+          </label>
+          <label>user_id (опц.)
+            <input type="number" name="user_id" min="1" />
+          </label>
+        </div>
+
+        <details class="headers">
+          <summary>Переопределить Embeddings-провайдера (для жюри)</summary>
+          <label>X-Embeddings-Url
+            <input type="url" name="X-Embeddings-Url" placeholder="https://api.openai.com/v1" />
+          </label>
+          <label>X-Embeddings-Key
+            <input type="password" name="X-Embeddings-Key" placeholder="sk-..." />
+          </label>
+          <label>X-Embeddings-Model
+            <input type="text" name="X-Embeddings-Model" placeholder="text-embedding-3-small" />
+          </label>
+        </details>
+
+        <button type="submit">Искать</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Текущая модель</h2>
+      <div class="row-btns">
+        <button id="btn-model-info">Обновить /api/model_info</button>
+      </div>
+      <pre id="model-info" class="pre">—</pre>
+    </section>
+
+    <section class="card wide">
+      <h2>Результаты</h2>
+      <div id="results" class="results"></div>
+      <pre id="debug" class="pre muted"></pre>
+    </section>
+  </main>
+
+  <footer class="container muted small">
+    <p>MVP под правила хакатона: Docker, /health, порт 8080, OpenAI-совместимые Embeddings. См. правила. </p>
+  </footer>
+
+  <script>
+    const elForm = document.getElementById('search-form');
+    const elResults = document.getElementById('results');
+    const elDebug = document.getElementById('debug');
+    const elModelInfo = document.getElementById('model-info');
+    const elBtnModelInfo = document.getElementById('btn-model-info');
+
+    function kv(obj) {
+      return Object.entries(obj)
+        .filter(([,v]) => v !== undefined && v !== null && v !== "")
+        .map(([k,v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&');
+    }
+
+    async function fetchModelInfo(hdrs) {
+      const res = await fetch('/api/model_info', { headers: hdrs });
+      const data = await res.json();
+      elModelInfo.textContent = JSON.stringify(data, null, 2);
+    }
+
+    elBtnModelInfo.addEventListener('click', async () => {
+      // берём заголовки из формы (если введены)
+      const fd = new FormData(elForm);
+      const headers = new Headers();
+      for (const name of ['X-Embeddings-Url','X-Embeddings-Key','X-Embeddings-Model']) {
+        const v = fd.get(name);
+        if (v) headers.set(name, v);
+      }
+      await fetchModelInfo(headers);
+    });
+
+    elForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      elResults.innerHTML = '';
+      elDebug.textContent = '';
+
+      const fd = new FormData(elForm);
+      const params = {
+        q: fd.get('q'),
+        top_k: fd.get('top_k'),
+        city: fd.get('city') || undefined,
+        user_id: fd.get('user_id') || undefined,
+        friends_only: fd.get('friends_only') === 'true'
+      };
+
+      const headers = new Headers();
+      for (const name of ['X-Embeddings-Url','X-Embeddings-Key','X-Embeddings-Model']) {
+        const v = fd.get(name);
+        if (v) headers.set(name, v);
+      }
+
+      const url = `/api/search?${kv(params)}`;
+      try {
+        const res = await fetch(url, { headers });
+        const data = await res.json();
+
+        // карточки результатов
+        (data.items || []).forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'hotel';
+          div.innerHTML = `
+            <div class="hotel-head">
+              <div class="badge">Score: ${item.score?.toFixed?.(2) ?? item.score}</div>
+              <div class="id">#${item.hotel_id}</div>
+            </div>
+            <p>${item.snippet || ''}</p>
+          `;
+          elResults.appendChild(div);
+        });
+
+        // отладка
+        elDebug.textContent = JSON.stringify({
+          query: data.query,
+          top_k: data.top_k,
+          latency_ms: data.latency_ms,
+          debug: data.debug
+        }, null, 2);
+
+      } catch (err) {
+        elDebug.textContent = 'Ошибка запроса: ' + (err?.message || err);
+      }
+    });
+
+    // авто-подтяжка info при первой загрузке без заголовков
+    fetchModelInfo(new Headers()).catch(()=>{});
+  </script>
+</body>
+</html>
