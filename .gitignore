@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Tools & caches
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.cache/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
