@@ -1,0 +1,55 @@
+<svg viewBox="0 0 1200 140" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+  <defs>
+    <!-- Градиенты -->
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#22D3EE"></stop>
+      <stop offset="100%" stop-color="#60A5FA"></stop>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#34D399"></stop>
+      <stop offset="100%" stop-color="#22D3EE"></stop>
+    </linearGradient>
+    <!-- Лёгкое размытие для дальней волны -->
+    <filter id="soft" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+    </filter>
+  </defs>
+
+  <!-- Фон градиентом (можно сделать прозрачным, если не нужен) -->
+  <rect width="1200" height="140" fill="transparent"></rect>
+
+  <!-- Дальняя волна (самая светлая, медленная) -->
+  <path id="w1" fill="url(#g1)" opacity="0.35" filter="url(#soft)">
+    <animate attributeName="d" dur="12s" repeatCount="indefinite" values="
+      M0,90 C220,130 420,60 600,90 C780,120 1000,70 1200,95 L1200,140 L0,140 Z;
+      M0,95 C220,120 420,75 600,95 C780,115 1000,80 1200,90 L1200,140 L0,140 Z;
+      M0,90 C220,130 420,60 600,90 C780,120 1000,70 1200,95 L1200,140 L0,140 Z"></animate>
+  </path>
+
+  <!-- Средняя волна (чуть ярче, средняя скорость) -->
+  <path id="w2" fill="url(#g2)" opacity="0.55">
+    <animate attributeName="d" dur="9s" repeatCount="indefinite" values="
+      M0,95 C240,140 420,70 600,95 C780,120 960,80 1200,100 L1200,140 L0,140 Z;
+      M0,100 C240,130 420,85 600,100 C780,115 960,90 1200,95 L1200,140 L0,140 Z;
+      M0,95 C240,140 420,70 600,95 C780,120 960,80 1200,100 L1200,140 L0,140 Z"></animate>
+  </path>
+
+  <!-- Ближняя волна (самая насыщенная, быстрая) -->
+  <path id="w3" fill="url(#g1)" opacity="0.9">
+    <animate attributeName="d" dur="6.5s" repeatCount="indefinite" values="
+      M0,105 C220,150 420,85 600,108 C780,130 980,95 1200,110 L1200,140 L0,140 Z;
+      M0,112 C220,140 420,98 600,112 C780,126 980,108 1200,106 L1200,140 L0,140 Z;
+      M0,105 C220,150 420,85 600,108 C780,130 980,95 1200,110 L1200,140 L0,140 Z"></animate>
+  </path>
+
+  <!-- Блик/линия на гребне ближней волны -->
+  <path stroke="#A7F3D0" stroke-width="1.2" fill="none" opacity="0.6">
+    <animate attributeName="d" dur="6.5s" repeatCount="indefinite" values="
+      M0,104 C220,148 420,84 600,106 C780,128 980,94 1200,108;
+      M0,111 C220,138 420,97 600,111 C780,125 980,107 1200,104;
+      M0,104 C220,148 420,84 600,106 C780,128 980,94 1200,108"></animate>
+  </path>
+
+  <!-- Мягкое появление/исчезновение всей композиции (если вставлять несколько секций подряд) -->
+  <animate attributeName="opacity" values="0.95;1;0.95" dur="8s" repeatCount="indefinite"></animate>
+</svg>
